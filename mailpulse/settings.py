@@ -185,8 +185,15 @@ SOCIALACCOUNT_LOGIN_ON_GET = True    # Skip intermediate page
 # Google OAuth scopes — name + email only (no Gmail access)
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
-        'SCOPE': ['profile', 'email'],
-        'AUTH_PARAMS': {'access_type': 'online'},
+        'SCOPE': [
+            'profile', 
+            'email',
+            'https://www.googleapis.com/auth/gmail.send'
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'offline',
+            'prompt': 'consent'
+        },
         'FETCH_USERINFO': True,
         'APP': {
             'client_id': os.getenv('GOOGLE_CLIENT_ID', ''),
@@ -195,6 +202,8 @@ SOCIALACCOUNT_PROVIDERS = {
         },
     }
 }
+
+SOCIALACCOUNT_STORE_TOKENS = True
 
 # Bootstrap 5 styled tags for Django Messages Framework
 MESSAGE_TAGS = {

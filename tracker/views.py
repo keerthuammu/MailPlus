@@ -21,7 +21,9 @@ from django.conf import settings
 from django.db.models import Q, F, Count, Max
 import json
 import datetime
+import requests
 from django.db.models.functions import TruncDate
+from allauth.socialaccount.models import SocialToken
 
 from .models import Email, EmailOpen
 from .forms import UserRegisterForm, EmailForm, UserLoginForm
@@ -275,7 +277,27 @@ class ComposeEmailView(LoginRequiredMixin, FormView):
                 mime_type = mime_type or 'application/octet-stream'
                 msg.attach(uploaded_file.name, uploaded_file.read(), mime_type)
 
-            msg.send(fail_silently=False)
+            # Instead of SMTP, send using Gmail REST API to bypass firewall blocks
+            social_token = SocialToken.objects.filter(account__user=self.request.user, account__provider='google').first()
+            if not social_token:
+                raise Exception("Google Account not fully connected. Please log out and log back in to grant Gmail access.")
+            
+            raw_message = msg.message().as_bytes()
+            encoded_message = base64.urlsafe_b64encode(raw_message).decode('utf-8')
+            
+            payload = {'raw': encoded_message}
+            headers = {
+                'Authorization': f'Bearer {social_token.token}', 
+                'Content-Type': 'application/json'
+            }
+            
+            api_url = 'https://gmail.googleapis.com/upload/gmail/v1/users/me/messages/send'
+            response = requests.post(api_url, json=payload, headers=headers)
+            
+            if response.status_code not in (200, 201):
+                if response.status_code == 401:
+                    raise Exception("Your Google Login session expired. Please log out and log back in.")
+                raise Exception(f"Gmail API Error: {response.text}")
 
             attach_info = f" with {len(uploaded_files)} attachment(s)" if uploaded_files else ""
             logger.info(f"Email '{email_obj.tracking_id}' successfully dispatched from '{self.request.user.username}' to '{recipient}'{attach_info}")
