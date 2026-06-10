@@ -205,8 +205,8 @@ EMAIL_USE_TLS=True
 
 **1. Clone the repository**
 ```bash
-git clone https://github.com/yourname/mailpulse.git
-cd mailpulse
+git clone https://github.com/keerthuammu/MailPlus.git
+cd MailPlus
 ```
 
 **2. Create and activate a virtual environment** *(recommended)*
@@ -311,25 +311,33 @@ python manage.py test tracker
 
 ## 📸 UI Screenshots & Showcase
 
-### 1. Engagement Dashboard
+### 1. User Sign In
+A clean, secure, and authenticated login page using standard Django session authentication and Google OAuth integration options.
+![User Sign In](screenshots/screenshot_login.png)
+
+### 2. Create Account
+User registration form styled with custom modern input controls. The default lengthy Django password validator lists have been removed for a cleaner UX.
+![Create Account](screenshots/screenshot_register.png)
+
+### 3. Engagement Dashboard
 Real-time aggregated statistics tracking open metrics, weekly trend charts, and chronological audit activity feeds.
-![Engagement Dashboard](screenshots/screenshot_3.png)
+![Engagement Dashboard](screenshots/screenshot_dashboard.png)
 
-### 2. Compose Email
+### 4. Compose Tracked Email
 Quill.js-powered rich composer with templates, link insertion, emoji pickers, email signature injections, and file/folder attachment support.
-![Compose Tracked Email](screenshots/screenshot_2.png)
+![Compose Tracked Email](screenshots/screenshot_compose.png)
 
-### 3. Sent Tracking Reports
+### 5. Sent Tracking Reports
 Fully searchable, filterable, and paginated records of all dispatched emails, showing the real-time status and quick actions.
-![Sent Tracking Reports](screenshots/screenshot_4.png)
+![Sent Tracking Reports](screenshots/screenshot_sent_reports.png)
 
-### 4. Inbox Viewer
+### 6. Inbox Viewer
 Integrated secure IMAP client displaying incoming emails with detailed previews.
-![Inbox Viewer](screenshots/screenshot_1.png)
+![Inbox Viewer](screenshots/screenshot_inbox.png)
 
-### 5. My Profile
+### 7. My Profile
 A summary of user statistics, email dispatch rates, open counts, and general profile settings.
-![My Profile](screenshots/screenshot_5.png)
+![My Profile](screenshots/screenshot_profile.png)
 
 ---
 
