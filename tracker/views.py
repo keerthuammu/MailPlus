@@ -291,7 +291,7 @@ class ComposeEmailView(LoginRequiredMixin, FormView):
                 'Content-Type': 'application/json'
             }
             
-            api_url = 'https://gmail.googleapis.com/upload/gmail/v1/users/me/messages/send'
+            api_url = 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send'
             response = requests.post(api_url, json=payload, headers=headers)
             
             if response.status_code not in (200, 201):
