@@ -21,7 +21,7 @@ DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 't')
 # In production set ALLOWED_HOSTS to your actual domain(s) in .env
 # e.g. ALLOWED_HOSTS=mailpulse.example.com,www.mailpulse.example.com
 _allowed = os.getenv('ALLOWED_HOSTS', '')
-ALLOWED_HOSTS = [h.strip() for h in _allowed.split(',') if h.strip()] if _allowed else (['localhost', '127.0.0.1', '.ngrok-free.app', '.localhost.run', '.localtunnel.me', '.lhr.life', '.serveo.net', '.serveousercontent.com'] if DEBUG else [])
+ALLOWED_HOSTS = [h.strip() for h in _allowed.split(',') if h.strip()] if _allowed else (['localhost', '127.0.0.1', '.ngrok-free.app', '.localhost.run', '.localtunnel.me', '.lhr.life', '.serveo.net', '.serveousercontent.com'] if DEBUG else ['*'])
 
 # Base URL for email tracking links (e.g. public tunnel URL)
 SITE_URL = os.getenv('SITE_URL', '')
@@ -50,6 +50,7 @@ SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -153,6 +154,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = []
 
 # Default primary key field type
