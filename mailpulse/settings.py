@@ -212,6 +212,7 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 't')
 EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() in ('true', '1', 't')
+EMAIL_TIMEOUT = 15
 
 # Use console backend if SMTP parameters are missing or contain default placeholders
 PLACEHOLDERS = {'your-email@gmail.com', 'your-app-password', 'your-email', 'your_email', 'your_password'}
