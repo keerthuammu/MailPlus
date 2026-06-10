@@ -14,7 +14,7 @@
 
 **MailPulse** is a full-stack SaaS Email Tracking System similar to Mailsuite or Yesware. It allows authenticated users to:
 
-🌍 **Live Demo:** [https://mailpulse.onrender.com](https://mailpulse.onrender.com)
+🌍 **Live Demo:** https://mailplus.onrender.com/
 
 - Compose rich HTML emails using the **Quill.js** editor
 - Send tracked emails via **Gmail SMTP** or a built-in **console fallback** for local development
