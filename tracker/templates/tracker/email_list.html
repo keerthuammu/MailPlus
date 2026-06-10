@@ -1,0 +1,326 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}Sent Emails | MailPulse{% endblock %}
+
+{% block extra_css %}
+<style>
+    .row-deleting {
+        opacity: 0;
+        transform: translateX(30px);
+        transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .live-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.72rem;
+        color: #4ade80;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+    }
+    .live-dot {
+        width: 7px;
+        height: 7px;
+        background: #4ade80;
+        border-radius: 50%;
+        animation: pulse-green 1.5s infinite;
+    }
+    @keyframes pulse-green {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(1.4); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+        <div>
+            <h1 class="mb-1 text-white" style="font-family: var(--font-heading); font-weight: 700; letter-spacing: -0.03em;">Sent Tracking Reports</h1>
+            <p class="text-muted mb-0 small">Browse, inspect, and analyze tracked email deliveries &nbsp;<span class="live-badge"><span class="live-dot"></span>Live</span></p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            {% if emails %}
+            <form method="post" action="{% url 'tracker:clear_history' %}" id="clear-history-form">
+                {% csrf_token %}
+                <button type="button" class="btn btn-glass-secondary" onclick="confirmClearHistory()" title="Delete all tracked emails">
+                    <i class="bi bi-trash3-fill me-2 text-danger"></i>Clear History
+                </button>
+            </form>
+            {% endif %}
+            <a href="{% url 'tracker:compose' %}" class="btn btn-pulse">
+                <i class="bi bi-pencil-square me-2"></i>Compose Email
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters and Search Bar Glass Box -->
+    <div class="card-glass mb-4">
+        <div class="card-glass-body">
+            <form method="get" class="row g-3 align-items-center">
+                <!-- Search Box -->
+                <div class="col-lg-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0 border-secondary-subtle" style="border-color: var(--card-border) !important;"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" name="q" class="form-control form-glass-control border-start-0 ps-1" placeholder="Search by recipient or subject..." value="{{ q }}">
+                    </div>
+                </div>
+                
+                <!-- Status Filter -->
+                <div class="col-sm-6 col-lg-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="text-muted small mb-0 flex-shrink-0" for="status-select">Status:</label>
+                        <select name="status" id="status-select" class="form-select form-glass-control py-2" style="font-size: 0.88rem;">
+                            <option value="all" {% if status == 'all' %}selected{% endif %}>All Emails</option>
+                            <option value="opened" {% if status == 'opened' %}selected{% endif %}>Opened</option>
+                            <option value="unopened" {% if status == 'unopened' %}selected{% endif %}>Unopened</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Sorting Option -->
+                <div class="col-sm-6 col-lg-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="text-muted small mb-0 flex-shrink-0" for="sort-select">Sort:</label>
+                        <select name="sort" id="sort-select" class="form-select form-glass-control py-2" style="font-size: 0.88rem;">
+                            <option value="desc" {% if sort == 'desc' %}selected{% endif %}>Newest First</option>
+                            <option value="asc" {% if sort == 'asc' %}selected{% endif %}>Oldest First</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="col-lg-2 d-grid">
+                    <button type="submit" class="btn btn-pulse py-2">
+                        <i class="bi bi-funnel-fill me-1"></i> Apply
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Table Grid -->
+    {% if not emails %}
+        <div class="card-glass py-5">
+            <div class="card-glass-body text-center py-5">
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="bi bi-search-heart text-muted"></i>
+                    </div>
+                    <h4 class="text-white mb-2">No Matching Emails Found</h4>
+                    <p class="text-muted mx-auto mb-4" style="max-width: 400px;">
+                        We couldn't find any sent email matching your search query or filter settings. Please adjust your criteria or compose a new email.
+                    </p>
+                    <a href="{% url 'tracker:email_list' %}" class="btn btn-glass-secondary">
+                        <i class="bi bi-arrow-counterclockwise me-2"></i>Clear Filters
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="table-responsive-glass mb-4 shadow-sm">
+            <table class="table-glass align-middle" id="email-table">
+                <thead>
+                    <tr>
+                        <th style="width: 28%;">Recipient</th>
+                        <th style="width: 23%;">Subject</th>
+                        <th style="width: 13%;">Dispatched</th>
+                        <th style="width: 13%;">Last Opened</th>
+                        <th class="text-center" style="width: 7%;">Opens</th>
+                        <th style="width: 8%;">Status</th>
+                        <th class="text-end" style="width: 8%;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="email-tbody">
+                    {% for email in emails %}
+                        <tr id="row-{{ email.tracking_id }}" data-tracking-id="{{ email.tracking_id }}" style="transition: opacity 0.4s ease, transform 0.4s ease;">
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="user-avatar text-white fw-bold shadow-sm" style="width: 32px; height: 32px; font-size: 0.85rem; flex-shrink: 0; background: linear-gradient(135deg, #4f46e5, #818cf8);">
+                                        {{ email.recipient|slice:":1"|upper }}
+                                    </div>
+                                    <span class="fw-semibold text-white text-truncate" style="max-width: 200px;" title="{{ email.recipient }}">{{ email.recipient }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="d-inline-block text-truncate text-muted" style="max-width: 220px;" title="{{ email.subject }}">
+                                    {{ email.subject }}
+                                </span>
+                            </td>
+                            <td class="text-muted" style="font-size: 0.85rem;">
+                                {{ email.sent_at|date:"Y-m-d H:i" }}
+                            </td>
+                            <td class="text-muted last-opened-cell" style="font-size: 0.85rem;">
+                                {% if email.last_opened %}
+                                    {{ email.last_opened|date:"Y-m-d H:i" }}
+                                {% else %}
+                                    <span class="text-secondary opacity-50">Never</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <span class="fw-bold text-white open-count-cell">{{ email.open_count }}</span>
+                            </td>
+                            <td class="status-cell">
+                                {% if email.is_opened %}
+                                    <span class="badge-glass success d-inline-flex align-items-center"><i class="bi bi-eye-fill me-1"></i>Opened</span>
+                                {% else %}
+                                    <span class="badge-glass danger d-inline-flex align-items-center"><i class="bi bi-eye-slash-fill me-1"></i>Unopened</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-1">
+                                    <a href="{% url 'tracker:email_detail' email.tracking_id %}" class="btn btn-glass-secondary btn-sm p-1 px-2 d-inline-flex align-items-center" style="font-size: 0.8rem;" title="View Tracking Audit History">
+                                        <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm p-1 px-2 d-inline-flex align-items-center" style="font-size: 0.8rem; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #f87171;" title="Delete Email" onclick="deleteEmail('{{ email.tracking_id }}', '{% url "tracker:email_delete" email.tracking_id %}')">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Navigation Controls -->
+        {% if is_paginated %}
+            <nav aria-label="Page navigation" class="d-flex justify-content-center mt-4">
+                <ul class="pagination gap-1">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link btn btn-glass-secondary border-0 text-white" href="?page={{ page_obj.previous_page_number }}&q={{ q }}&status={{ status }}&sort={{ sort }}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item">
+                                <span class="page-link btn btn-pulse border-0 active text-white" style="cursor: default;">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+                            <li class="page-item">
+                                <a class="page-link btn btn-glass-secondary border-0 text-white" href="?page={{ num }}&q={{ q }}&status={{ status }}&sort={{ sort }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link btn btn-glass-secondary border-0 text-white" href="?page={{ page_obj.next_page_number }}&q={{ q }}&status={{ status }}&sort={{ sort }}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% endif %}
+</div>
+
+<!-- Clear History Confirmation Modal -->
+<div class="modal fade" id="clearHistoryModal" tabindex="-1" aria-labelledby="clearHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content card-glass border-0">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-white" id="clearHistoryModalLabel"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Clear All History</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-muted">
+                This will permanently delete <strong class="text-white">all your tracked emails</strong> and their open history. This action <strong class="text-danger">cannot be undone</strong>.
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-glass-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="document.getElementById('clear-history-form').submit()">
+                    <i class="bi bi-trash3-fill me-1"></i> Yes, Delete All
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF_TOKEN = '{{ csrf_token }}';
+
+// --- Live status polling ---
+function pollEmailStatus() {
+    fetch('/api/emails/status/', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(res => res.json())
+        .then(data => {
+            data.emails.forEach(email => {
+                const row = document.getElementById('row-' + email.tracking_id);
+                if (!row) return;
+
+                // Update open count
+                const countCell = row.querySelector('.open-count-cell');
+                if (countCell && parseInt(countCell.textContent) !== email.open_count) {
+                    countCell.textContent = email.open_count;
+                }
+
+                // Update last opened
+                const lastOpenedCell = row.querySelector('.last-opened-cell');
+                if (lastOpenedCell && email.last_opened) {
+                    lastOpenedCell.innerHTML = email.last_opened;
+                }
+
+                // Update status badge
+                const statusCell = row.querySelector('.status-cell');
+                if (statusCell) {
+                    const currentlyOpened = statusCell.querySelector('.badge-glass.success') !== null;
+                    if (email.is_opened && !currentlyOpened) {
+                        statusCell.innerHTML = '<span class="badge-glass success d-inline-flex align-items-center"><i class="bi bi-eye-fill me-1"></i>Opened</span>';
+                        // Flash highlight on row
+                        row.style.background = 'rgba(74, 222, 128, 0.08)';
+                        setTimeout(() => { row.style.background = ''; }, 2000);
+                    }
+                }
+            });
+        })
+        .catch(() => {}); // Fail silently
+}
+
+// Poll every 5 seconds
+if (document.getElementById('email-tbody')) {
+    setInterval(pollEmailStatus, 5000);
+}
+
+// --- Delete single email ---
+function deleteEmail(trackingId, deleteUrl) {
+    if (!confirm('Are you sure you want to delete this tracked email? This cannot be undone.')) return;
+    fetch(deleteUrl, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': CSRF_TOKEN, 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const row = document.getElementById('row-' + trackingId);
+            if (row) {
+                row.style.opacity = '0';
+                row.style.transform = 'translateX(30px)';
+                setTimeout(() => {
+                    row.remove();
+                    // If no rows left, reload to show empty state
+                    const tbody = document.getElementById('email-tbody');
+                    if (tbody && tbody.querySelectorAll('tr').length === 0) {
+                        location.reload();
+                    }
+                }, 400);
+            }
+        }
+    })
+    .catch(() => alert('Failed to delete email. Please try again.'));
+}
+
+// --- Clear history confirmation modal ---
+function confirmClearHistory() {
+    const modal = new bootstrap.Modal(document.getElementById('clearHistoryModal'));
+    modal.show();
+}
+</script>
+{% endblock %}

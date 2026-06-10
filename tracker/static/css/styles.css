@@ -1,0 +1,741 @@
+/* 
+   ==========================================================================
+   MailPulse Premium Dark SaaS Theme Configuration
+   Colors:
+     Primary: #6366f1 (Indigo)
+     Secondary: #4f46e5 (Deep Indigo)
+     Background: #0f172a (Deep Slate)
+     Cards: #1e293b (Slate Grey)
+     Success: #14b8a6 (Teal)
+     Danger: #ef4444 (Coral/Red)
+   ==========================================================================
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --bg-color: #030712;
+    --card-bg: #090d16;
+    --card-border: rgba(255, 255, 255, 0.08);
+    --primary-color: #6366f1;
+    --primary-hover: #4f46e5;
+    --success-color: #10b981;
+    --danger-color: #f43f5e;
+    --text-primary: #f9fafb;
+    --text-muted: #9ca3af;
+    --text-hover: #ffffff;
+    --sidebar-width: 240px;
+    --header-height: 64px;
+    --font-heading: 'Outfit', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --glass-bg: rgba(11, 15, 25, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+/* Base Styles */
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: all 0.2s ease-in-out;
+}
+a:hover {
+    color: var(--primary-hover);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-color);
+}
+::-webkit-scrollbar-thumb {
+    background: #1f2937;
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #374151;
+}
+
+/* App Layout Grid */
+#app-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar Styling */
+#sidebar {
+    width: var(--sidebar-width);
+    background-color: #090d16;
+    border-right: 1px solid var(--card-border);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.sidebar-logo {
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    padding: 0 1.25rem;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.sidebar-logo span {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #a5b4fc, var(--primary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.sidebar-nav {
+    padding: 1.25rem 0.75rem;
+    flex-grow: 1;
+}
+
+.nav-item-link {
+    display: flex;
+    align-items: center;
+    padding: 0.65rem 0.85rem;
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-bottom: 0.35rem;
+    transition: all 0.2s ease;
+}
+
+.nav-item-link i {
+    font-size: 1.1rem;
+    margin-right: 0.75rem;
+}
+
+.nav-item-link:hover, .nav-item-link.active {
+    color: var(--text-hover);
+    background-color: rgba(99, 102, 241, 0.08);
+}
+.nav-item-link.active {
+    background-color: rgba(99, 102, 241, 0.12);
+    font-weight: 600;
+    color: #a5b4fc;
+}
+
+.sidebar-footer {
+    padding: 1rem 0.75rem;
+    border-top: 1px solid var(--card-border);
+    background-color: rgba(9, 13, 22, 0.4);
+}
+
+.user-badge {
+    display: flex;
+    align-items: center;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.user-info {
+    margin-left: 0.65rem;
+    max-width: 130px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-info h6 {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.user-info span {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+/* Main Content Area */
+#main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background-color: var(--bg-color);
+}
+
+#topbar {
+    height: var(--header-height);
+    background-color: rgba(3, 7, 18, 0.8);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    padding: 0 1.5rem;
+    justify-content: space-between;
+    z-index: 999;
+}
+
+.content-wrapper {
+    padding: 2rem;
+    flex-grow: 1;
+    overflow: visible; /* Entire page scrolls naturally, no nested scrollbar */
+}
+
+/* SaaS Minimalist Cards */
+.card-glass {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-glass:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.card-glass-header {
+    padding: 0.9rem 1.25rem;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.card-glass-body {
+    padding: 1.25rem;
+}
+
+/* Stat Widget Cards */
+.stat-card {
+    border: 1px solid var(--card-border);
+    background-color: var(--card-bg);
+    border-radius: 8px;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.025em;
+    margin-bottom: 0.15rem;
+    background: none;
+    -webkit-text-fill-color: initial;
+}
+
+.stat-label {
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.stat-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.03);
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+}
+
+.stat-card.success .stat-icon {
+    color: var(--success-color);
+    background-color: rgba(16, 185, 129, 0.06);
+}
+
+.stat-card.danger .stat-icon {
+    color: var(--danger-color);
+    background-color: rgba(244, 63, 94, 0.06);
+}
+
+/* Dashboard Progress Rings & Indicators */
+.progress-thin {
+    height: 6px;
+    background-color: rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-thin .progress-bar {
+    border-radius: 10px;
+    background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+}
+
+/* Forms Styling */
+.form-glass-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-glass-group label {
+    font-family: var(--font-heading);
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 0.45rem;
+}
+
+.form-glass-control {
+    background-color: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 8px !important;
+    color: var(--text-primary) !important;
+    padding: 0.75rem 1rem !important;
+    transition: all 0.25s ease-in-out !important;
+}
+
+.form-glass-control:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25) !important;
+    background-color: rgba(15, 23, 42, 0.8) !important;
+}
+
+.form-glass-control::placeholder {
+    color: #475569 !important;
+}
+
+/* Buttons */
+.btn-pulse {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    border: none;
+    color: white;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    padding: 0.65rem 1.5rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.btn-pulse:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.45);
+    background: linear-gradient(135deg, #7477f8, #5b52f1);
+}
+
+.btn-glass-secondary {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    font-family: var(--font-heading);
+    font-weight: 500;
+    padding: 0.65rem 1.5rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn-glass-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+/* Authentication Page layout */
+.auth-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 1) 0%, rgba(9, 13, 26, 1) 100%);
+    padding: 1.5rem;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 440px;
+    background-color: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    padding: 2.2rem;
+}
+
+/* Custom Table Design */
+.table-responsive-glass {
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: var(--card-bg);
+}
+
+.table-glass {
+    margin: 0;
+    width: 100%;
+    color: var(--text-primary);
+    border-collapse: collapse;
+}
+
+.table-glass th {
+    background-color: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid var(--card-border);
+    padding: 0.75rem 1.2rem;
+    font-family: var(--font-heading);
+    font-weight: 500;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.table-glass td {
+    padding: 0.85rem 1.2rem;
+    border-bottom: 1px solid var(--card-border);
+    vertical-align: middle;
+}
+
+.table-glass tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table-glass tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.table-glass tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.015);
+}
+
+/* Badges styling */
+.badge-glass {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    border-radius: 4px;
+}
+
+.badge-glass.success {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(16, 185, 129, 0.15);
+}
+
+.badge-glass.danger {
+    background-color: rgba(244, 63, 94, 0.1);
+    color: var(--danger-color);
+    border: 1px solid rgba(244, 63, 94, 0.15);
+}
+
+/* Activity Timeline (Dashboard Side Feed) */
+.timeline-mini {
+    position: relative;
+    padding-left: 1.5rem;
+    margin-left: 0.5rem;
+}
+
+.timeline-mini::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 5px;
+    bottom: 5px;
+    width: 2px;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.timeline-mini-item {
+    position: relative;
+    padding-bottom: 1.2rem;
+}
+
+.timeline-mini-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-mini-indicator {
+    position: absolute;
+    left: -1.88rem;
+    top: 3px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    border: 2px solid var(--bg-color);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+}
+
+.timeline-mini-item.opened .timeline-mini-indicator {
+    background-color: var(--success-color);
+    box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.2);
+}
+
+.timeline-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.timeline-meta {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+/* Email Audit Timeline (Detail View) */
+.timeline-audit {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline-audit::before {
+    content: '';
+    position: absolute;
+    left: 9px;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.timeline-audit-item {
+    position: relative;
+    padding-bottom: 2rem;
+}
+
+.timeline-audit-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-audit-badge {
+    position: absolute;
+    left: -2rem;
+    top: 4px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: var(--success-color);
+    border: 4px solid var(--card-bg);
+    box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.15);
+}
+
+.timeline-audit-content {
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+}
+
+.timeline-audit-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.timeline-audit-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.timeline-audit-grid span i {
+    color: var(--primary-color);
+    margin-right: 0.35rem;
+}
+
+/* Empty State Styles */
+.empty-state {
+    text-align: center;
+    padding: 3.5rem 1.5rem;
+    color: var(--text-muted);
+}
+
+.empty-state-icon {
+    font-size: 3.5rem;
+    color: rgba(255, 255, 255, 0.05);
+    margin-bottom: 1.2rem;
+    display: inline-block;
+    padding: 1.2rem;
+    background-color: rgba(255, 255, 255, 0.02);
+    border-radius: 50%;
+}
+
+.empty-state h5 {
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+/* Rich Text Editor Overrides */
+.quill-editor-wrapper {
+    background-color: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.ql-toolbar.ql-snow {
+    border: none !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+    background-color: rgba(15, 23, 42, 0.8) !important;
+}
+
+.ql-container.ql-snow {
+    border: none !important;
+    min-height: 240px;
+    font-family: var(--font-body) !important;
+    font-size: 0.95rem !important;
+}
+
+.ql-editor {
+    color: var(--text-primary) !important;
+}
+
+.ql-editor.ql-blank::before {
+    color: #475569 !important;
+    font-style: normal !important;
+}
+
+.ql-snow .ql-stroke {
+    stroke: var(--text-muted) !important;
+}
+
+.ql-snow .ql-fill {
+    fill: var(--text-muted) !important;
+}
+
+.ql-snow .ql-picker {
+    color: var(--text-muted) !important;
+}
+
+.ql-snow .ql-picker-options {
+    background-color: var(--card-bg) !important;
+    border-color: var(--glass-border) !important;
+}
+
+/* Responsive UI Adjustments */
+@media (max-width: 991.98px) {
+    #sidebar {
+        position: fixed;
+        left: -260px;
+        top: 0;
+        bottom: 0;
+    }
+    
+    #sidebar.show {
+        left: 0;
+    }
+    
+    #main-content {
+        margin-left: 0 !important;
+    }
+    
+    #topbar {
+        padding: 0 1.2rem;
+    }
+    
+    .content-wrapper {
+        padding: 1.2rem;
+    }
+}
+
+/* Mobile Sidebar Backdrop overlay */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 998;
+    display: none;
+}
+
+.sidebar-overlay.show {
+    display: block;
+}
+
+/* Spinner Styles */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+}
+
+/* Custom CSS Alert overlays styling */
+.alert-container {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    z-index: 2000;
+    max-width: 380px;
+    width: calc(100% - 3rem);
+}
+
+.alert-dismissible .btn-close {
+    filter: invert(1);
+}
+
+/* 
+   ==========================================================================
+   Premium Theme Legibility & Contrast Overrides
+   ==========================================================================
+*/
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+/* Fix alert text visibility on dark glass backgrounds */
+.alert.card-glass {
+    color: var(--text-primary);
+}
+
+.alert-warning {
+    color: #fbbf24 !important; /* Brighter amber for warning headers */
+}
+
+.alert-warning .text-muted {
+    color: #cbd5e1 !important; /* Lighter silver-gray for warning text to maintain excellent contrast */
+}
+
+/* General support for custom bootstrap colors in dark theme */
+.text-indigo {
+    color: #818cf8 !important;
+}
+
+code {
+    background-color: rgba(0, 0, 0, 0.3) !important;
+    color: #fda4af !important; /* Rose-colored code block font for readability */
+    padding: 0.15rem 0.35rem;
+    border-radius: 4px;
+}
+

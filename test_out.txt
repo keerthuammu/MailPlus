@@ -1,0 +1,11 @@
+Testing 'ssh -V':
+SUCCESS: stdout=, stderr=OpenSSH_for_Windows_9.5p2, LibreSSL 3.8.2
+
+Testing 'node -v':
+SUCCESS: stdout=v24.11.1
+, stderr=
+Testing 'npm -v':
+ERROR: [WinError 2] The system cannot find the file specified
+Testing 'ngrok version':
+SUCCESS: stdout=ngrok version 3.20.0
+, stderr=

@@ -1,0 +1,317 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}Dashboard | MailPulse{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chart-container {
+        position: relative;
+        width: 100%;
+        height: 220px;
+    }
+    .donut-container {
+        position: relative;
+        width: 140px;
+        height: 140px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    
+    <!-- Dashboard Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+        <div>
+            <h1 class="mb-1 text-white" style="font-family: var(--font-heading); font-weight: 700; letter-spacing: -0.03em;">Engagement Dashboard</h1>
+            <p class="text-muted mb-0 small">Track real-time analytics and email opens</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'tracker:compose' %}" class="btn btn-pulse">
+                <i class="bi bi-pencil-square me-2"></i>Compose Email
+            </a>
+            <a href="{% url 'tracker:export_csv' %}" class="btn btn-glass-secondary">
+                <i class="bi bi-download me-2"></i>Export Report
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Cards Row -->
+    <div class="row g-3 mb-4">
+        <!-- Total Sent Card -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card-glass stat-card">
+                <div class="card-glass-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-label">Total Sent</div>
+                        <div class="stat-value mt-1">{{ total_sent }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-send"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Total Opened Card -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card-glass stat-card success">
+                <div class="card-glass-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-label">Opened</div>
+                        <div class="stat-value mt-1 text-success">{{ opened_count }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-envelope-open"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Unopened Card -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card-glass stat-card danger">
+                <div class="card-glass-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-label">Unopened</div>
+                        <div class="stat-value mt-1 text-danger">{{ unopened_count }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-envelope"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today's Opens Card -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card-glass stat-card success">
+                <div class="card-glass-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-label">Today's Opens</div>
+                        <div class="stat-value mt-1" style="color: #2dd4bf;">{{ today_opens }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-lightning-charge"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if total_sent == 0 %}
+        <!-- Empty State Handling -->
+        <div class="card-glass py-5">
+            <div class="card-glass-body text-center py-5">
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="bi bi-envelope-paper text-indigo"></i>
+                    </div>
+                    <h3 class="fw-bold text-white mb-2">No Tracked Emails Yet</h3>
+                    <p class="text-muted mx-auto mb-4" style="max-width: 480px;">
+                        Start monitoring your recipient engagement! Compose an email with rich text, send it, and real-time open statistics will appear on this dashboard immediately.
+                    </p>
+                    <a href="{% url 'tracker:compose' %}" class="btn btn-pulse px-4 py-2">
+                        <i class="bi bi-pencil-square me-2"></i>Send Your First Email
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- Main Analytical Section -->
+        <div class="row g-4">
+            
+            <!-- Left Side: Performance Chart & Quick Details -->
+            <div class="col-lg-8">
+                <div class="card-glass mb-4">
+                    <div class="card-glass-header">
+                        <h5 class="mb-0 text-white"><i class="bi bi-graph-up text-indigo me-2"></i>Weekly Open Trends</h5>
+                        <span class="badge badge-glass success">Last 7 Days</span>
+                    </div>
+                    <div class="card-glass-body">
+                        <div class="chart-container">
+                            <canvas id="weeklyTrendsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <!-- Donut Card -->
+                    <div class="col-md-6">
+                        <div class="card-glass h-100">
+                            <div class="card-glass-header">
+                                <h5 class="mb-0 text-white"><i class="bi bi-pie-chart text-indigo me-2"></i>Open Performance</h5>
+                            </div>
+                            <div class="card-glass-body d-flex flex-column align-items-center justify-content-center py-4">
+                                <div class="donut-container mb-3">
+                                    <canvas id="openRateChart"></canvas>
+                                </div>
+                                <div class="text-center">
+                                    <h4 class="fw-bold text-white mb-1">{{ open_rate }}% Open Rate</h4>
+                                    <p class="text-muted small mb-0">Percentage of sent emails opened by recipients</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Open metrics list breakdown -->
+                    <div class="col-md-6">
+                        <div class="card-glass h-100">
+                            <div class="card-glass-header">
+                                <h5 class="mb-0 text-white"><i class="bi bi-list-stars text-indigo me-2"></i>Engagement Metrics</h5>
+                            </div>
+                            <div class="card-glass-body d-flex flex-column justify-content-between h-100">
+                                <div class="w-100 mt-2">
+                                    <div class="d-flex justify-content-between text-muted small mb-2">
+                                        <span>Opened ({{ opened_count }} emails)</span>
+                                        <span>Unopened ({{ unopened_count }} emails)</span>
+                                    </div>
+                                    <div class="progress progress-thin mb-4">
+                                        <div class="progress-bar" role="progressbar" style="width: {{ open_rate }}%" aria-valuenow="{{ open_rate }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-3 w-100 justify-content-around text-center pt-3 border-top border-secondary-subtle" style="border-color: var(--card-border) !important;">
+                                    <div>
+                                        <h5 class="text-white mb-0 fw-bold">{{ total_sent }}</h5>
+                                        <small class="text-muted" style="font-size: 0.72rem;">Dispatched</small>
+                                    </div>
+                                    <div>
+                                        <h5 class="text-success mb-0 fw-bold">{{ opened_count }}</h5>
+                                        <small class="text-muted" style="font-size: 0.72rem;">Unique Opens</small>
+                                    </div>
+                                    <div>
+                                        <h5 class="text-danger mb-0 fw-bold">{{ unopened_count }}</h5>
+                                        <small class="text-muted" style="font-size: 0.72rem;">Ignored</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Recent Activity Timeline -->
+            <div class="col-lg-4">
+                <div class="card-glass h-100">
+                    <div class="card-glass-header">
+                        <h5 class="mb-0 text-white"><i class="bi bi-clock-history text-indigo me-2"></i>Recent Activity</h5>
+                        <a href="{% url 'tracker:email_list' %}" class="small fw-semibold text-indigo">View All</a>
+                    </div>
+                    <div class="card-glass-body">
+                        {% if not recent_opens %}
+                            <div class="text-center py-5">
+                                <i class="bi bi-bell-slash text-muted fs-3 mb-2"></i>
+                                <p class="text-muted small">No tracking actions logged yet.<br>Opens appear here instantly.</p>
+                            </div>
+                        {% else %}
+                            <div class="timeline-mini">
+                                {% for item in recent_opens %}
+                                    <div class="timeline-mini-item opened mb-3">
+                                        <div class="timeline-mini-indicator"></div>
+                                        <div class="d-flex justify-content-between flex-wrap gap-1">
+                                            <h6 class="timeline-title text-white" style="font-size: 0.85rem; max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                Opened by <a href="{% url 'tracker:email_detail' item.email.tracking_id %}" class="fw-semibold text-indigo" title="{{ item.email.recipient }}">{{ item.email.recipient }}</a>
+                                            </h6>
+                                            <span class="timeline-meta text-muted" style="font-size: 0.7rem;">{{ item.opened_at|timesince }} ago</span>
+                                        </div>
+                                        <div class="timeline-meta mt-1 text-muted d-flex align-items-center gap-2" style="font-size: 0.72rem;">
+                                            <span><i class="bi bi-laptop me-1"></i>{{ item.browser }}</span>
+                                            <span>•</span>
+                                            <span>IP: {{ item.ip_address }}</span>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if total_sent > 0 %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Line Chart - Weekly Open Trends
+        const weeklyCtx = document.getElementById('weeklyTrendsChart').getContext('2d');
+        const labels = {{ weekly_labels_json|safe }};
+        const trendsData = {{ weekly_trends_json|safe }};
+
+        new Chart(weeklyCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Opens',
+                    data: trendsData,
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99, 102, 241, 0.04)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    pointBackgroundColor: '#6366f1',
+                    pointBorderColor: '#090d16',
+                    pointHoverRadius: 6,
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#9ca3af', font: { family: 'Inter', size: 10 } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                        ticks: {
+                            color: '#9ca3af',
+                            font: { family: 'Inter', size: 10 },
+                            stepSize: 1,
+                            precision: 0
+                        },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Donut Chart - Open Rate
+        const openCtx = document.getElementById('openRateChart').getContext('2d');
+        const openRateValue = {{ open_rate }};
+        const unopenedRateValue = 100 - openRateValue;
+
+        new Chart(openCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Opened', 'Unopened'],
+                datasets: [{
+                    data: [openRateValue, unopenedRateValue],
+                    backgroundColor: ['#10b981', 'rgba(255, 255, 255, 0.04)'],
+                    borderColor: '#090d16',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: true }
+                }
+            }
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}

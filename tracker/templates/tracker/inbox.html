@@ -1,0 +1,214 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}Inbox | MailPulse{% endblock %}
+
+{% block extra_css %}
+<style>
+    .inbox-item {
+        border-radius: 10px;
+        border: 1px solid var(--glass-border);
+        background: rgba(255,255,255,0.03);
+        padding: 1rem 1.25rem;
+        margin-bottom: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+    .inbox-item:hover {
+        background: rgba(99, 102, 241, 0.08);
+        border-color: rgba(99, 102, 241, 0.3);
+        transform: translateY(-1px);
+    }
+    .inbox-item.unread {
+        border-left: 3px solid #6366f1;
+        background: rgba(99, 102, 241, 0.06);
+    }
+    .inbox-item .inbox-from {
+        font-weight: 600;
+        color: #e2e8f0;
+        font-size: 0.88rem;
+    }
+    .inbox-item .inbox-subject {
+        color: #cbd5e1;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    .inbox-item.unread .inbox-subject {
+        color: #fff;
+        font-weight: 700;
+    }
+    .inbox-item .inbox-date {
+        color: #64748b;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+    .inbox-preview {
+        color: #64748b;
+        font-size: 0.78rem;
+        margin-top: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+    /* Body panel: MUST start fully hidden */
+    .email-body-panel {
+        display: none !important;
+        overflow: hidden;
+        background: rgba(9, 13, 22, 0.5);
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-top: 0.75rem;
+        border: 1px solid var(--glass-border);
+        font-size: 0.85rem;
+        color: #cbd5e1;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .email-body-panel.show {
+        display: block !important;
+        animation: fadeSlideIn 0.2s ease;
+    }
+    @keyframes fadeSlideIn {
+        from { opacity: 0; transform: translateY(-8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .unread-dot {
+        width: 8px;
+        height: 8px;
+        background: #6366f1;
+        border-radius: 50%;
+        flex-shrink: 0;
+        margin-top: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+        <div>
+            <h1 class="mb-1 text-white" style="font-family: var(--font-heading); font-weight: 700; letter-spacing: -0.03em;">
+                <i class="bi bi-inbox-fill me-2 text-indigo"></i>Inbox
+            </h1>
+            <p class="text-muted mb-0 small">Read your received emails directly in MailPulse</p>
+        </div>
+        <div>
+            <a href="{% url 'tracker:inbox' %}" class="btn btn-glass-secondary">
+                <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+            </a>
+        </div>
+    </div>
+
+    {% if error %}
+    <!-- Error State -->
+    <div class="card-glass">
+        <div class="card-glass-body text-center py-5">
+            <i class="bi bi-wifi-off text-danger" style="font-size: 2.5rem;"></i>
+            <h5 class="text-white mt-3 mb-2">Inbox Connection Failed</h5>
+            <p class="text-muted mx-auto mb-4" style="max-width: 480px;">{{ error }}</p>
+            <div class="card-glass p-3 text-start mx-auto" style="max-width: 460px; font-size: 0.82rem;">
+                <p class="text-muted mb-2"><strong class="text-white">Setup Checklist:</strong></p>
+                <ul class="text-muted mb-0" style="line-height: 2;">
+                    <li>Set <code class="text-indigo">IMAP_HOST=imap.gmail.com</code> in your <code>.env</code> file</li>
+                    <li>Ensure <code class="text-indigo">EMAIL_HOST_USER</code> is your Gmail address</li>
+                    <li>Use a Gmail <strong>App Password</strong> for <code class="text-indigo">EMAIL_HOST_PASSWORD</code></li>
+                    <li>Enable IMAP in Gmail: <em>Settings → See all settings → Forwarding and POP/IMAP → Enable IMAP</em></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    {% elif not inbox_emails %}
+    <!-- Empty State -->
+    <div class="card-glass py-5">
+        <div class="card-glass-body text-center py-5">
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="bi bi-envelope-open text-muted"></i>
+                </div>
+                <h4 class="text-white mb-2">Your Inbox is Empty</h4>
+                <p class="text-muted mx-auto" style="max-width: 400px;">
+                    No emails found in your inbox. Check back later or send yourself a test email.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Inbox Email List -->
+    <div class="card-glass">
+        <div class="card-glass-header">
+            <h5 class="mb-0 text-white"><i class="bi bi-envelope-paper text-indigo me-2"></i>Recent Messages</h5>
+            <span class="badge-glass success">{{ inbox_emails|length }} messages</span>
+        </div>
+        <div class="card-glass-body">
+            {% for mail in inbox_emails %}
+            <div class="inbox-item {% if not mail.is_read %}unread{% endif %}" id="item-{{ forloop.counter }}" onclick="toggleBody({{ forloop.counter }}, event)">
+                <div class="d-flex align-items-start gap-3">
+                    {% if not mail.is_read %}
+                    <div class="unread-dot"></div>
+                    {% else %}
+                    <div style="width: 8px; flex-shrink: 0;"></div>
+                    {% endif %}
+                    <div class="flex-grow-1 overflow-hidden">
+                        <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
+                            <span class="inbox-from text-truncate">{{ mail.from }}</span>
+                            <span class="inbox-date flex-shrink-0">{{ mail.date|truncatechars:25 }}</span>
+                        </div>
+                        <div class="inbox-subject text-truncate">{{ mail.subject }}</div>
+                        <div class="inbox-preview" id="preview-{{ forloop.counter }}">{{ mail.body_preview }}</div>
+                    </div>
+                    <i class="bi bi-chevron-down text-muted" id="chevron-{{ forloop.counter }}" style="transition: transform 0.2s; font-size: 0.75rem; flex-shrink: 0; margin-top: 2px;"></i>
+                </div>
+                <!-- Collapsible Email Body -->
+                <div class="email-body-panel" id="body-{{ forloop.counter }}">
+                    <div class="border-bottom mb-3 pb-2" style="border-color: rgba(255,255,255,0.08) !important;">
+                        <p class="text-muted mb-1 small"><strong class="text-white">From:</strong> {{ mail.from }}</p>
+                        <p class="text-muted mb-1 small"><strong class="text-white">Date:</strong> {{ mail.date }}</p>
+                        <p class="text-muted mb-0 small"><strong class="text-white">Subject:</strong> {{ mail.subject }}</p>
+                    </div>
+                    <div style="line-height: 1.7; word-break: break-word;">
+                        {{ mail.body|safe }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleBody(index, event) {
+    const panel = document.getElementById('body-' + index);
+    const chevron = document.getElementById('chevron-' + index);
+    const preview = document.getElementById('preview-' + index);
+    if (!panel) return;
+
+    const isOpen = panel.classList.contains('show');
+
+    // Close all open panels first
+    document.querySelectorAll('.email-body-panel.show').forEach(function(p) {
+        p.classList.remove('show');
+    });
+    document.querySelectorAll('[id^="chevron-"]').forEach(function(c) {
+        c.style.transform = '';
+    });
+    document.querySelectorAll('[id^="preview-"]').forEach(function(p) {
+        p.style.display = '';
+    });
+
+    // Toggle the clicked panel
+    if (!isOpen) {
+        panel.classList.add('show');
+        if (chevron) chevron.style.transform = 'rotate(180deg)';
+        if (preview) preview.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}
+

@@ -1,0 +1,10 @@
+# Django and Python ignored files
+*.pyc
+__pycache__/
+venv/
+.env
+db.sqlite3
+logs/
+.idea/
+.vscode/
+*.log

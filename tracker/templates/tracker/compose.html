@@ -1,0 +1,813 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}Compose Tracked Email | MailPulse{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Compose card layout */
+    .compose-card {
+        background: rgba(15, 19, 35, 0.85);
+        border: 1px solid rgba(99, 102, 241, 0.18);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    }
+    .compose-header {
+        padding: 1.1rem 1.4rem;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .compose-fields {
+        padding: 0 1.4rem;
+    }
+    .compose-field-row {
+        display: flex;
+        align-items: center;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        gap: 0.75rem;
+    }
+    .compose-field-label {
+        color: #64748b;
+        font-size: 0.82rem;
+        font-weight: 600;
+        width: 56px;
+        flex-shrink: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .compose-field-input {
+        background: transparent;
+        border: none;
+        outline: none;
+        color: #e2e8f0;
+        font-size: 0.92rem;
+        width: 100%;
+        padding: 0;
+    }
+    .compose-field-input::placeholder { color: #475569; }
+    .compose-field-input:focus { box-shadow: none; }
+
+    /* Quill editor area */
+    .compose-editor-area {
+        min-height: 280px;
+        padding: 1rem 1.4rem 0.5rem;
+    }
+    /* Override Quill snow theme to match dark UI */
+    #editor-container {
+        min-height: 240px;
+        color: #e2e8f0;
+        font-size: 0.93rem;
+        line-height: 1.7;
+        border: none !important;
+    }
+    .ql-toolbar.ql-snow {
+        background: rgba(30, 35, 55, 0.95);
+        border: none !important;
+        border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+        border-radius: 10px 10px 0 0;
+        padding: 6px 8px;
+        transition: all 0.25s ease;
+    }
+    .ql-toolbar.ql-snow .ql-stroke { stroke: #94a3b8; }
+    .ql-toolbar.ql-snow .ql-fill { fill: #94a3b8; }
+    .ql-toolbar.ql-snow button:hover .ql-stroke,
+    .ql-toolbar.ql-snow .ql-picker-label:hover .ql-stroke { stroke: #6366f1; }
+    .ql-toolbar.ql-snow button:hover .ql-fill { fill: #6366f1; }
+    .ql-toolbar.ql-snow .ql-picker-label { color: #94a3b8; }
+    .ql-toolbar.ql-snow .ql-picker-options {
+        background: #1e2337;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 8px;
+        color: #e2e8f0;
+    }
+    .ql-container.ql-snow { border: none !important; }
+    .ql-editor.ql-blank::before { color: #475569 !important; font-style: normal !important; }
+
+    /* Formatting toolbar slide animation */
+    .quill-toolbar-wrapper {
+        overflow: hidden;
+        max-height: 0;
+        transition: max-height 0.25s ease;
+    }
+    .quill-toolbar-wrapper.visible {
+        max-height: 60px;
+    }
+
+    /* Gmail-style bottom action bar */
+    .compose-action-bar {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 0.75rem 1.2rem;
+        border-top: 1px solid rgba(255,255,255,0.06);
+        background: rgba(10, 13, 25, 0.5);
+        flex-wrap: wrap;
+    }
+    /* Send button group */
+    .send-btn-group {
+        display: flex;
+        align-items: center;
+        border-radius: 24px;
+        overflow: hidden;
+        margin-right: 12px;
+    }
+    .btn-send-main {
+        background: #6366f1;
+        color: #fff;
+        border: none;
+        padding: 0.42rem 1.15rem;
+        font-size: 0.88rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: background 0.2s;
+        border-radius: 24px 0 0 24px;
+        letter-spacing: 0.01em;
+    }
+    .btn-send-main:hover { background: #4f46e5; }
+    .btn-send-main:disabled { opacity: 0.7; cursor: not-allowed; }
+    .btn-send-dropdown {
+        background: #4f46e5;
+        color: #fff;
+        border: none;
+        border-left: 1px solid rgba(255,255,255,0.2);
+        padding: 0.42rem 0.6rem;
+        cursor: pointer;
+        border-radius: 0 24px 24px 0;
+        transition: background 0.2s;
+        position: relative;
+    }
+    .btn-send-dropdown:hover { background: #4338ca; }
+
+    /* Toolbar action icon buttons */
+    .toolbar-btn {
+        background: transparent;
+        border: none;
+        color: #64748b;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background 0.15s, color 0.15s;
+        position: relative;
+        flex-shrink: 0;
+    }
+    .toolbar-btn:hover { background: rgba(99,102,241,0.12); color: #a5b4fc; }
+    .toolbar-btn.active { color: #6366f1; background: rgba(99,102,241,0.15); }
+    .toolbar-btn-divider {
+        width: 1px;
+        height: 20px;
+        background: rgba(255,255,255,0.1);
+        margin: 0 6px;
+        flex-shrink: 0;
+    }
+
+    /* Emoji Picker Popover */
+    .emoji-popover {
+        display: none;
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1e2337;
+        border: 1px solid rgba(99,102,241,0.25);
+        border-radius: 12px;
+        padding: 10px;
+        width: 260px;
+        z-index: 9999;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        font-size: 1.35rem;
+        line-height: 1.8;
+        letter-spacing: 2px;
+    }
+    .emoji-popover.show { display: block; animation: popIn 0.15s ease; }
+    @keyframes popIn {
+        from { opacity: 0; transform: translateX(-50%) scale(0.92); }
+        to   { opacity: 1; transform: translateX(-50%) scale(1); }
+    }
+    .emoji-popover span {
+        cursor: pointer;
+        display: inline-block;
+        width: 30px;
+        text-align: center;
+        border-radius: 4px;
+        transition: background 0.1s;
+    }
+    .emoji-popover span:hover { background: rgba(99,102,241,0.2); }
+
+    /* Send schedule dropdown */
+    .send-schedule-menu {
+        display: none;
+        position: absolute;
+        bottom: calc(100% + 6px);
+        right: 0;
+        background: #1e2337;
+        border: 1px solid rgba(99,102,241,0.25);
+        border-radius: 10px;
+        min-width: 200px;
+        z-index: 9999;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        overflow: hidden;
+    }
+    .send-schedule-menu.show { display: block; animation: popIn 0.15s ease; }
+    .send-schedule-menu a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0.65rem 1rem;
+        color: #cbd5e1;
+        font-size: 0.85rem;
+        text-decoration: none;
+        transition: background 0.15s;
+    }
+    .send-schedule-menu a:hover { background: rgba(99,102,241,0.12); color: #fff; }
+    .send-schedule-menu a i { color: #6366f1; font-size: 1rem; width: 18px; }
+
+    /* Tooltip */
+    .toolbar-btn::after {
+        content: attr(data-tip);
+        position: absolute;
+        bottom: calc(100% + 6px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1e2337;
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #cbd5e1;
+        font-size: 0.72rem;
+        padding: 3px 8px;
+        border-radius: 6px;
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.15s;
+        z-index: 999;
+    }
+    .toolbar-btn:hover::after { opacity: 1; }
+
+    /* Spacer */
+    .toolbar-spacer { flex: 1; }
+
+    /* Template select */
+    .template-pill {
+        background: rgba(99,102,241,0.1);
+        border: 1px solid rgba(99,102,241,0.2);
+        border-radius: 20px;
+        padding: 0.3rem 0.9rem;
+        color: #a5b4fc;
+        font-size: 0.78rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .template-pill:hover { background: rgba(99,102,241,0.2); }
+    select.template-pill {
+        background-image: none;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+
+    /* Attachment Preview Area CSS */
+    .attachment-preview-area {
+        background: rgba(15, 19, 35, 0.4);
+        margin: 0;
+        padding-top: 0.5rem !important;
+    }
+    .attachment-chip {
+        background: rgba(30, 35, 55, 0.8);
+        border: 1px solid rgba(99, 102, 241, 0.25);
+        color: #e2e8f0;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        max-width: 280px;
+        transition: all 0.2s ease;
+        animation: fadeIn 0.2s ease-out;
+    }
+    .attachment-chip:hover {
+        border-color: rgba(99, 102, 241, 0.5);
+        background: rgba(99, 102, 241, 0.08);
+    }
+    .attachment-chip .file-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex-grow: 1;
+    }
+    .attachment-chip .file-size {
+        color: #64748b;
+        font-size: 0.72rem;
+        flex-shrink: 0;
+    }
+    .attachment-chip .btn-remove-file {
+        background: transparent;
+        border: none;
+        color: #64748b;
+        padding: 0;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        transition: background 0.15s, color 0.15s;
+    }
+    .attachment-chip .btn-remove-file:hover {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+        <div>
+            <h1 class="mb-1 text-white" style="font-family: var(--font-heading); font-weight: 700; letter-spacing: -0.03em;">
+                <i class="bi bi-pencil-square me-2 text-indigo"></i>Compose Tracked Email
+            </h1>
+            <p class="text-muted mb-0 small">Rich text editor with automated open-tracking analytics</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <select id="template-select" class="template-pill" title="Load template">
+                <option value="">📋 Load template…</option>
+                <option value="welcome">Welcome Onboarding</option>
+                <option value="followup">Meeting Follow-up</option>
+                <option value="launch">Product Launch</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Compose Card -->
+    <div class="compose-card">
+
+        <!-- Card Header -->
+        <div class="compose-header">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-shield-lock-fill text-indigo"></i>
+                <span class="text-white fw-semibold" style="font-size:0.9rem;">New Tracked Message</span>
+            </div>
+            <span class="badge" style="background:rgba(99,102,241,0.15);color:#a5b4fc;font-size:0.72rem;border-radius:20px;padding:4px 10px;">
+                <i class="bi bi-radar me-1"></i>Tracking Active
+            </span>
+        </div>
+
+        <!-- Form -->
+        <form method="post" id="compose-form" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- Field rows -->
+            <div class="compose-fields">
+                <div class="compose-field-row">
+                    <span class="compose-field-label">To</span>
+                    <input type="email" name="recipient" class="compose-field-input" id="recipient-field"
+                           placeholder="recipient@example.com" required
+                           value="{{ form.recipient.value|default:'' }}">
+                    {% if form.recipient.errors %}
+                    <span class="text-danger small"><i class="bi bi-exclamation-circle"></i> {{ form.recipient.errors|join:", " }}</span>
+                    {% endif %}
+                </div>
+                <div class="compose-field-row">
+                    <span class="compose-field-label">Subject</span>
+                    <input type="text" name="subject" class="compose-field-input" id="subject-field"
+                           placeholder="Enter subject line…" required
+                           value="{{ form.subject.value|default:'' }}">
+                    {% if form.subject.errors %}
+                    <span class="text-danger small"><i class="bi bi-exclamation-circle"></i> {{ form.subject.errors|join:", " }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Editor area -->
+            <div class="compose-editor-area">
+                <!-- Sliding Quill toolbar (hidden by default, toggled by Aa button) -->
+                <div class="quill-toolbar-wrapper" id="quill-toolbar-wrapper">
+                    <div id="quill-toolbar">
+                        <span class="ql-formats">
+                            <button class="ql-bold"></button>
+                            <button class="ql-italic"></button>
+                            <button class="ql-underline"></button>
+                            <button class="ql-strike"></button>
+                        </span>
+                        <span class="ql-formats">
+                            <select class="ql-size">
+                                <option value="small"></option>
+                                <option selected></option>
+                                <option value="large"></option>
+                                <option value="huge"></option>
+                            </select>
+                        </span>
+                        <span class="ql-formats">
+                            <select class="ql-color"></select>
+                            <select class="ql-background"></select>
+                        </span>
+                        <span class="ql-formats">
+                            <button class="ql-list" value="ordered"></button>
+                            <button class="ql-list" value="bullet"></button>
+                            <button class="ql-indent" value="-1"></button>
+                            <button class="ql-indent" value="+1"></button>
+                        </span>
+                        <span class="ql-formats">
+                            <select class="ql-align"></select>
+                        </span>
+                        <span class="ql-formats">
+                            <button class="ql-blockquote"></button>
+                            <button class="ql-code-block"></button>
+                            <button class="ql-link"></button>
+                            <button class="ql-image"></button>
+                        </span>
+                        <span class="ql-formats">
+                            <button class="ql-clean"></button>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Quill editor -->
+                <div id="editor-container"></div>
+                <input type="hidden" name="message" id="message-field" value="{{ form.message.value|default:'' }}">
+                {% if form.message.errors %}
+                <div class="text-danger mt-1 small"><i class="bi bi-exclamation-circle me-1"></i>{{ form.message.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Attachment Preview Area -->
+            <div class="attachment-preview-area px-4 pb-3" id="attachment-preview-area" style="display:none;">
+                <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom" style="border-color: rgba(255,255,255,0.08) !important;">
+                    <span class="text-muted small fw-semibold"><i class="bi bi-paperclip me-1"></i>ATTACHMENTS (<span id="attachment-count">0</span>)</span>
+                    <button type="button" class="btn btn-link btn-sm text-muted p-0 text-decoration-none" id="btn-clear-all-attachments" style="font-size:0.75rem;">Clear All</button>
+                </div>
+                <div class="d-flex flex-wrap gap-2" id="attachment-list">
+                    <!-- Attachment chips dynamically rendered here -->
+                </div>
+            </div>
+
+            <!-- Hidden Inputs for Files and Folders -->
+            <input type="file" id="files-input" name="attachments" multiple style="display:none;">
+            <input type="file" id="folder-input" multiple webkitdirectory directory style="display:none;">
+
+            <!-- Gmail-style bottom action bar -->
+            <div class="compose-action-bar">
+
+                <!-- Send button group -->
+                <div class="send-btn-group" style="position:relative;">
+                    <button type="submit" class="btn-send-main" id="submit-btn">
+                        <span class="spinner-border spinner-border-sm d-none" id="btn-spinner" role="status" aria-hidden="true"></span>
+                        <i class="bi bi-send-fill" id="btn-icon"></i>
+                        <span id="btn-text">Send</span>
+                    </button>
+                    <button type="button" class="btn-send-dropdown" id="send-dropdown-btn" title="More send options">
+                        <i class="bi bi-chevron-down" style="font-size:0.7rem;"></i>
+                    </button>
+                    <!-- Schedule send dropdown -->
+                    <div class="send-schedule-menu" id="send-schedule-menu">
+                        <a href="#" onclick="scheduleSend('now'); return false;"><i class="bi bi-send"></i> Send now</a>
+                        <a href="#" onclick="scheduleSend('tomorrow'); return false;"><i class="bi bi-calendar-event"></i> Schedule for tomorrow</a>
+                        <a href="#" onclick="scheduleSend('custom'); return false;"><i class="bi bi-clock"></i> Pick date &amp; time…</a>
+                    </div>
+                </div>
+
+                <!-- Formatting toggle (Aa) -->
+                <button type="button" class="toolbar-btn" id="btn-formatting" data-tip="Formatting">
+                    <span style="font-size:0.82rem;font-weight:700;letter-spacing:-1px;color:inherit;">Aa</span>
+                </button>
+
+                <!-- Attachment Button & Dropdown -->
+                <div class="attachment-btn-group" style="position:relative; display:inline-block;">
+                    <button type="button" class="toolbar-btn" id="btn-attach" data-tip="Attach files or folder">
+                        <i class="bi bi-paperclip" style="font-size:1.1rem;"></i>
+                    </button>
+                    <!-- Attachment dropdown -->
+                    <div class="send-schedule-menu" id="attach-menu" style="left: 0; right: auto;">
+                        <a href="#" id="attach-files-option"><i class="bi bi-file-earmark-plus"></i> Upload Files</a>
+                        <a href="#" id="attach-folder-option"><i class="bi bi-folder-plus"></i> Upload Folder</a>
+                    </div>
+                </div>
+
+                <!-- Link -->
+                <button type="button" class="toolbar-btn" id="btn-link" data-tip="Insert link" onclick="insertLink()">
+                    <i class="bi bi-link-45deg" style="font-size:1.1rem;"></i>
+                </button>
+
+                <!-- Emoji -->
+                <button type="button" class="toolbar-btn" id="btn-emoji" data-tip="Emoji" style="position:relative;">
+                    <i class="bi bi-emoji-smile" style="font-size:1rem;"></i>
+                    <div class="emoji-popover" id="emoji-popover">
+                        <span onclick="insertEmoji('😊')">😊</span><span onclick="insertEmoji('👍')">👍</span><span onclick="insertEmoji('🙏')">🙏</span><span onclick="insertEmoji('❤️')">❤️</span><span onclick="insertEmoji('🎉')">🎉</span><span onclick="insertEmoji('🔥')">🔥</span><span onclick="insertEmoji('✅')">✅</span><span onclick="insertEmoji('⚡')">⚡</span><span onclick="insertEmoji('💡')">💡</span><span onclick="insertEmoji('📌')">📌</span><span onclick="insertEmoji('🚀')">🚀</span><span onclick="insertEmoji('💬')">💬</span><span onclick="insertEmoji('📎')">📎</span><span onclick="insertEmoji('🖊️')">🖊️</span><span onclick="insertEmoji('📅')">📅</span><span onclick="insertEmoji('🔔')">🔔</span><span onclick="insertEmoji('😄')">😄</span><span onclick="insertEmoji('😎')">😎</span><span onclick="insertEmoji('🤝')">🤝</span><span onclick="insertEmoji('💼')">💼</span>
+                    </div>
+                </button>
+
+                <!-- Image -->
+                <button type="button" class="toolbar-btn" id="btn-image" data-tip="Insert image" onclick="triggerImageInsert()">
+                    <i class="bi bi-image" style="font-size:1rem;"></i>
+                </button>
+
+                <!-- Signature -->
+                <button type="button" class="toolbar-btn" id="btn-signature" data-tip="Insert signature" onclick="insertSignature()">
+                    <i class="bi bi-pen" style="font-size:0.95rem;"></i>
+                </button>
+
+                <!-- Divider -->
+                <div class="toolbar-btn-divider"></div>
+
+                <!-- More options -->
+                <button type="button" class="toolbar-btn" data-tip="More options" onclick="alert('More options coming soon!')">
+                    <i class="bi bi-three-dots-vertical" style="font-size:1rem;"></i>
+                </button>
+
+                <!-- Spacer -->
+                <div class="toolbar-spacer"></div>
+
+                <!-- Discard draft -->
+                <a href="{% url 'tracker:dashboard' %}" class="toolbar-btn" data-tip="Discard draft" style="text-decoration:none;" id="btn-discard">
+                    <i class="bi bi-trash3" style="font-size:0.95rem;"></i>
+                </a>
+
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // --- Init Quill with custom toolbar ---
+    const quill = new Quill('#editor-container', {
+        modules: {
+            toolbar: '#quill-toolbar'
+        },
+        placeholder: 'Write your message here…',
+        theme: 'snow'
+    });
+
+    // Restore pre-existing content (validation bounce)
+    const messageField = document.getElementById('message-field');
+    if (messageField && messageField.value) {
+        quill.root.innerHTML = messageField.value;
+    }
+
+    // Expose quill globally so inline onclick handlers can reach it
+    window._quill = quill;
+
+    // --- Formatting toggle (Aa) ---
+    const formattingBtn = document.getElementById('btn-formatting');
+    const toolbarWrapper = document.getElementById('quill-toolbar-wrapper');
+    formattingBtn.addEventListener('click', function () {
+        toolbarWrapper.classList.toggle('visible');
+        formattingBtn.classList.toggle('active');
+    });
+
+    // --- Templates ---
+    const templates = {
+        welcome: `<p>Hi there,</p><p>Welcome to MailPulse! We're excited to have you on board.</p><p>With our tracking system, you can easily monitor when your emails are opened and get rich analytics. Let us know if you have any questions.</p><p>Best regards,<br>The MailPulse Team</p>`,
+        followup: `<p>Hi,</p><p>It was great speaking with you today. I'm following up on our discussion.</p><p>Please let me know your thoughts or if you'd like to schedule another brief call to sync up.</p><p>Best,<br>[Your Name]</p>`,
+        launch: `<p>Hello,</p><p>We are thrilled to announce the official launch of MailPulse v2.0!</p><p>This release brings interactive analytics, real-time timelines, and optimized tracking to help you monitor emails faster than ever.</p><p>Cheers,<br>Product Team</p>`
+    };
+    const templateSelect = document.getElementById('template-select');
+    if (templateSelect) {
+        templateSelect.addEventListener('change', function () {
+            if (this.value && templates[this.value]) {
+                quill.root.innerHTML = templates[this.value];
+                this.value = '';
+            }
+        });
+    }
+
+    // --- Send dropdown toggle ---
+    const sendDropdownBtn = document.getElementById('send-dropdown-btn');
+    const sendScheduleMenu = document.getElementById('send-schedule-menu');
+    sendDropdownBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        sendScheduleMenu.classList.toggle('show');
+    });
+
+    // --- Emoji toggle ---
+    const emojiBtn = document.getElementById('btn-emoji');
+    const emojiPopover = document.getElementById('emoji-popover');
+    emojiBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        emojiPopover.classList.toggle('show');
+    });
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', function () {
+        sendScheduleMenu.classList.remove('show');
+        emojiPopover.classList.remove('show');
+        const attachMenu = document.getElementById('attach-menu');
+        if (attachMenu) attachMenu.classList.remove('show');
+    });
+
+    // --- Attachment Handling ---
+    let selectedFiles = [];
+    const attachBtn = document.getElementById('btn-attach');
+    const attachMenu = document.getElementById('attach-menu');
+    const filesInput = document.getElementById('files-input');
+    const folderInput = document.getElementById('folder-input');
+    const attachFilesOption = document.getElementById('attach-files-option');
+    const attachFolderOption = document.getElementById('attach-folder-option');
+
+    if (attachBtn && attachMenu) {
+        attachBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            attachMenu.classList.toggle('show');
+        });
+    }
+
+    if (attachFilesOption) {
+        attachFilesOption.addEventListener('click', function (e) {
+            e.preventDefault();
+            attachMenu.classList.remove('show');
+            filesInput.click();
+        });
+    }
+
+    if (attachFolderOption) {
+        attachFolderOption.addEventListener('click', function (e) {
+            e.preventDefault();
+            attachMenu.classList.remove('show');
+            folderInput.click();
+        });
+    }
+
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const dm = 1;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+
+    function getFileIcon(fileName) {
+        const ext = fileName.split('.').pop().toLowerCase();
+        if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(ext)) return 'bi-file-earmark-image text-info';
+        if (['pdf'].includes(ext)) return 'bi-file-earmark-pdf text-danger';
+        if (['zip', 'rar', 'tar', 'gz', '7z'].includes(ext)) return 'bi-file-earmark-zip text-warning';
+        if (['doc', 'docx', 'txt', 'rtf', 'md'].includes(ext)) return 'bi-file-earmark-text text-primary';
+        if (['xls', 'xlsx', 'csv'].includes(ext)) return 'bi-file-earmark-excel text-success';
+        return 'bi-file-earmark';
+    }
+
+    function renderAttachments() {
+        const container = document.getElementById('attachment-preview-area');
+        const list = document.getElementById('attachment-list');
+        const countSpan = document.getElementById('attachment-count');
+
+        list.innerHTML = '';
+        countSpan.textContent = selectedFiles.length;
+
+        if (selectedFiles.length === 0) {
+            container.style.display = 'none';
+            return;
+        }
+
+        container.style.display = 'block';
+
+        selectedFiles.forEach((file, index) => {
+            const chip = document.createElement('div');
+            chip.className = 'attachment-chip';
+            
+            const displayName = file.webkitRelativePath || file.name;
+            const iconClass = getFileIcon(file.name);
+
+            chip.innerHTML = `
+                <i class="bi ${iconClass}" style="font-size:1.1rem; flex-shrink:0;"></i>
+                <span class="file-name" title="${displayName}">${displayName}</span>
+                <span class="file-size">${formatBytes(file.size)}</span>
+                <button type="button" class="btn-remove-file" data-index="${index}">
+                    <i class="bi bi-x"></i>
+                </button>
+            `;
+            list.appendChild(chip);
+        });
+
+        // Add event listeners to remove buttons
+        document.querySelectorAll('.btn-remove-file').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const idx = parseInt(this.getAttribute('data-index'));
+                selectedFiles.splice(idx, 1);
+                renderAttachments();
+            });
+        });
+    }
+
+    if (filesInput) {
+        filesInput.addEventListener('change', function () {
+            for (let i = 0; i < this.files.length; i++) {
+                selectedFiles.push(this.files[i]);
+            }
+            renderAttachments();
+            this.value = '';
+        });
+    }
+
+    if (folderInput) {
+        folderInput.addEventListener('change', function () {
+            for (let i = 0; i < this.files.length; i++) {
+                selectedFiles.push(this.files[i]);
+            }
+            renderAttachments();
+            this.value = '';
+        });
+    }
+
+    const clearAllBtn = document.getElementById('btn-clear-all-attachments');
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', function () {
+            selectedFiles = [];
+            renderAttachments();
+        });
+    }
+
+    // --- Form submit ---
+    const composeForm = document.getElementById('compose-form');
+    const submitBtn = document.getElementById('submit-btn');
+    composeForm.addEventListener('submit', function (e) {
+        const textContent = quill.getText().trim();
+        const htmlContent = quill.root.innerHTML;
+        if (textContent.length === 0 && !htmlContent.includes('<img') && selectedFiles.length === 0) {
+            e.preventDefault();
+            alert('Please enter a message body or attach files before sending.');
+            return;
+        }
+        messageField.value = htmlContent;
+
+        // Assign selected files to filesInput using DataTransfer
+        const dt = new DataTransfer();
+        selectedFiles.forEach(file => {
+            dt.items.add(file);
+        });
+        document.getElementById('files-input').files = dt.files;
+
+        if (submitBtn) {
+            document.getElementById('btn-spinner').classList.remove('d-none');
+            document.getElementById('btn-icon').classList.add('d-none');
+            document.getElementById('btn-text').textContent = 'Sending…';
+            submitBtn.disabled = true;
+        }
+    });
+});
+
+// --- Global helpers for inline onclick handlers ---
+function insertEmoji(emoji) {
+    const q = window._quill;
+    if (!q) return;
+    const range = q.getSelection(true);
+    q.insertText(range ? range.index : q.getLength(), emoji);
+    document.getElementById('emoji-popover').classList.remove('show');
+}
+
+function insertLink() {
+    const url = prompt('Enter URL:');
+    if (!url) return;
+    const q = window._quill;
+    const range = q.getSelection(true);
+    if (range && range.length > 0) {
+        q.formatText(range.index, range.length, 'link', url);
+    } else {
+        q.insertText(range ? range.index : q.getLength(), url, 'link', url);
+    }
+}
+
+function triggerImageInsert() {
+    // Trigger Quill's built-in image handler
+    const toolbar = window._quill.getModule('toolbar');
+    toolbar.handlers['image'].call(toolbar);
+}
+
+function insertSignature() {
+    const q = window._quill;
+    const sig = '\n\n-- \nBest regards,\n[Your Name]\n[Your Title] | MailPulse';
+    const idx = q.getLength();
+    q.insertText(idx, sig);
+    q.setSelection(idx + sig.length);
+}
+
+function scheduleSend(type) {
+    document.getElementById('send-schedule-menu').classList.remove('show');
+    if (type === 'now') {
+        document.getElementById('compose-form').requestSubmit();
+    } else {
+        alert('Scheduled sending coming soon!');
+    }
+}
+</script>
+{% endblock %}
+
